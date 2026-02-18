@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=npgtest
+    ports:
+      - 5432:5432
+    volumes:
+      - 'db_data:/var/lib/postgresql'
+
+  adminer:
+    image: adminer:5.4.0
+    ports:
+      - 8080:8080
+
+volumes:
+  db_data:
