@@ -43,12 +43,13 @@ public static class TemporalExtensions
         return entityTypeBuilder.HasKey(propertyNames).WithoutOverlaps();
     }
 
+    const string FILTER_NAME = "TemporalFilterCurrentOnly";
+
     public static void WithCurrentOnlyFilter(this KeyBuilder keyBuilder)
     {
         var prop = keyBuilder.Metadata.Properties[^1];
         var propinfo = prop.PropertyInfo;        
-        Type rangeDbFuncs = typeof(NpgsqlRangeDbFunctionsExtensions);
-        var contains = rangeDbFuncs.GetMethod("Contains", 1, [typeof(DateTime)]);
+        var contains = typeof(NpgsqlRangeDbFunctionsExtensions).GetMethod("Contains", 1, [typeof(DateTime)]);
         var param = Expression.Parameter(keyBuilder.Metadata.DeclaringEntityType.ClrType);
         Type dateTime = typeof(DateTime);
 
@@ -62,7 +63,7 @@ public static class TemporalExtensions
         });
 
         keyBuilder.Metadata.DeclaringEntityType.SetQueryFilter(
-            "TemporalFilterCurrentOnly",
+            FILTER_NAME,
             Expression.Lambda(
                 Expression.Call(
                     Expression.Property(param, propinfo),
@@ -72,4 +73,7 @@ public static class TemporalExtensions
     }
 
     public static void WithCurrentOnlyFilter<TEntity>(this KeyBuilder<TEntity> keyBuilder) => keyBuilder.WithCurrentOnlyFilter();
+
+    public static IQueryable<TEntity> IncludeHistory<TEntity>(this IQueryable<TEntity> queryable) where TEntity : class
+        => queryable.IgnoreQueryFilters([FILTER_NAME]);
 }
